@@ -14,20 +14,14 @@ import java.nio.ByteBuffer;
 
 public class DnsPacket {
 
+	private ByteBuffer dnsPacketHeader;
+	private ByteBuffer dnsPacketQuestion; 
+	private ByteBuffer dnsPacketAnswers;
 
-	/*
-+---------------------+
-Header 			
-+---------------------+
-| Question 				| the question for the name server
-+---------------------+
-| Answer 				| answers to the question
-+---------------------+
-| Authority 			| RRs pointing toward an authority (not used in this lab)
-+---------------------+
-| Additional 			| RRs holding additional information
-+---------------------+
-	*/
+	private ByteBuffer dnsPacket; 
 
+	public ByteBuffer createPacketHeader(boolean qr, boolean aa){
+		
+	} 
 
 }
