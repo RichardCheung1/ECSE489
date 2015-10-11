@@ -15,9 +15,9 @@ import java.nio.ByteBuffer;
 
 public class DnsRequest {
 
-	private int TIMEOUT_DEFAULT = 5; 
-	private int MAX_RETRIES_DEFAULT = 3;
-	private int PORT_DEFAULT = 53; 
+	private final int TIMEOUT_DEFAULT = 5; 
+	private final int MAX_RETRIES_DEFAULT = 3;
+	private final int PORT_DEFAULT = 53; 
 	private int timeout,maxRetries,port ;
 
 

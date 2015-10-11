@@ -61,14 +61,12 @@ public class DnsClient {
 			 	case "-r":
 			 		error= isNumeric(args[i+1]);
 					int rvalue = Integer.parseInt(args[i+1]);
-	
 			 		request.setMaxRetries(rvalue); 	
 			 		System.out.println("Set retries to: "+ request.getMaxRetries() );			 				 			 	
 			 		break;
 			 	case "-p":
 			 		error= isNumeric(args[i+1]);
 					int pvalue = Integer.parseInt(args[i+1]);
-
 			 		request.setPort(pvalue); 		
 			 		System.out.println("Set port to: "+ request.getPort() );
 			 		break;
