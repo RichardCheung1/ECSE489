@@ -14,7 +14,7 @@ import java.net.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class DnsClient {
+public class Client {
 	 
 	//Format for ip address 
 	private static final String IPADDRESS_PATTERN = 
@@ -22,7 +22,7 @@ public class DnsClient {
 		"([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
 		"([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\." +
 		"([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
-	private static DNS.DnsRequest request; 
+	private static DNS.Request request; 
 
 
 	public static void main (String[] args) {
@@ -48,7 +48,7 @@ public class DnsClient {
 			return;
 		}
 		boolean error = true; 
-		request = new DnsRequest(); 
+		request = new Request(); 
 		for (int i = 0 ; i< argsArraySize; i++ ) {
 			 switch (args[i]) {
 			 	//TO DO: timeout,max-retries,port,mx or ns flag, server, name

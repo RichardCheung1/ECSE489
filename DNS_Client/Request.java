@@ -13,7 +13,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.ByteBuffer;
 
-public class DnsRequest {
+public class Request {
 
 	private final int TIMEOUT_DEFAULT = 5; 
 	private final int MAX_RETRIES_DEFAULT = 3;
@@ -21,7 +21,7 @@ public class DnsRequest {
 	private int timeout,maxRetries,port ;
 
 
-	public DnsRequest() {
+	public Request() {
 		timeout = TIMEOUT_DEFAULT; 
 		maxRetries = MAX_RETRIES_DEFAULT; 
 		port = PORT_DEFAULT; 
@@ -35,6 +35,7 @@ public class DnsRequest {
 
 	public void setPort (int port) { this.port = port ; }
 	public int getPort () { return this.port; }
+
 
 
 }

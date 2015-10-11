@@ -16,4 +16,9 @@ import java.nio.ByteBuffer;
 public class Packet {
 
 	private byte[] header
+
+	private static void putShort(byte[] b, int off, short val) {
+        b[off + 1] = (byte) (val >>> 0);
+        b[off + 0] = (byte) (val >>> 8);
+   }
 }
