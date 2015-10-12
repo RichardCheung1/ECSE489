@@ -87,6 +87,9 @@ public class Client {
 		byte[] packetData = packet.data();
 		InetAddress ipAddress = request.ipData();
 
+		System.out.println("DnsClient sending request for "+name); 
+		System.out.println("Server: "+ request.getIpAddr());
+		System.out.println("Request Type: " + request.getStringType());
 		DatagramPacket sendPacket = new DatagramPacket(packetData, packetData.length, ipAddress, request.getPort());
 		clientSocket.send(sendPacket);
 

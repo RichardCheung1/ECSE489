@@ -56,6 +56,15 @@ public class Request {
 
 	public void setType (int type) { this.type = type ; }
 	public int getType () { return this.type; }
+	public String getStringType () {
+		if (getType() ==TYPE_NS_QUERY ) {
+			return "NS";
+		}
+		if (getType() ==TYPE_MX_QUERY ) {
+			return "MX";
+		}
+		return "A";
+	}
 
 	private void setIpAddr (String ipAddr) { this.ipAddress = ipAddr ; }
 	public String getIpAddr () { return this.ipAddress; }
@@ -71,6 +80,7 @@ public class Request {
 		}
 		InetAddress addr1 = InetAddress.getByAddress(new byte [] {(byte)ipV4[0],(byte)ipV4[1],
 																	(byte)ipV4[2],(byte)ipV4[3]});
+		System.out.println("Hostname"+addr1.getHostName());
 		return addr1;
 	}
 

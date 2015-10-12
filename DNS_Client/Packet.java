@@ -67,10 +67,10 @@ public class Packet {
 	public byte[] data() {
 		String name = this.name; 
 		int type = this.type; 
-		System.out.println(name+type);
 		packetHeader();
 		packetQuestion(name,type);
-		ByteBuffer data =  ByteBuffer.allocate(1500);
+		packetAnswer();
+		ByteBuffer data =  ByteBuffer.allocate(520);
 		data.putShort(id);
 		data.putShort(flags);
 		data.putShort(qdCount);
@@ -80,22 +80,23 @@ public class Packet {
 		data.put(qName);
 		data.putShort(qType);
 		data.putShort(qClass);
-		//for (int i =0; i<3; i++ ) {
+		for (int i =0; i<3; i++ ) {
 			data.putShort(aName);
 			data.putShort(aType);
-			//data.putShort(aClass);
-			//data.putShort(aTtl);
-			//data.putShort(aRdLength);
-			//data.putShort(aPreference);
-			//data.put(aExchange);
-		//}
-		System.out.println(new String(data.array(),StandardCharsets.US_ASCII ));
+			data.putShort(aClass);
+			data.putShort(aTtl);
+			data.putShort(aRdLength);
+			data.putShort(aPreference);
+			data.put(aExchange);
+		}
+		System.out.println(new String(data.array()));
 		return data.array();
 
 	}
 
 	private void packetAnswer() {
 		this.aName = this.aType = this.aClass = this.aTtl = this.aRdLength = this.aPreference = 0x0000;
+		this.aExchange = new byte[63];
 	}
 
 	private short writeType(int type) {
@@ -123,7 +124,7 @@ public class Packet {
 		for (char charData : name.toCharArray() ) {
 			charCounter++;
 			if ( charData == '.'){
-				data.put(String.valueOf(counter).getBytes(StandardCharsets.US_ASCII));
+				data.put(String.valueOf(counter).getBytes());
 				for (int j = 0; j<counter; j++ ) {
 				 	data.put(String.valueOf(buffer[j]).getBytes(StandardCharsets.US_ASCII));
 				 } 
@@ -135,7 +136,7 @@ public class Packet {
 				counter ++;
 			}
 			if ( charCounter == dataSize) {
-				data.put(String.valueOf(counter).getBytes(StandardCharsets.US_ASCII));
+				data.put(String.valueOf(counter).getBytes());
 				for (int j = 0; j<counter; j++ ) {
 				 	data.put(String.valueOf(buffer[j]).getBytes(StandardCharsets.US_ASCII));
 				 } 
@@ -143,7 +144,7 @@ public class Packet {
 				counter =0;
 			}
 		}
-		data.put(String.valueOf(0).getBytes(StandardCharsets.US_ASCII));
+		data.put(String.valueOf(0).getBytes());
 		return data.array() ;
 	}
 
