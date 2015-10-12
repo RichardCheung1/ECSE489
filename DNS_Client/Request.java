@@ -36,6 +36,4 @@ public class Request {
 	public void setPort (int port) { this.port = port ; }
 	public int getPort () { return this.port; }
 
-
-
 }
