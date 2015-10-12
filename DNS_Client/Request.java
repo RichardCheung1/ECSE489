@@ -80,7 +80,7 @@ public class Request {
 		}
 		InetAddress addr1 = InetAddress.getByAddress(new byte [] {(byte)ipV4[0],(byte)ipV4[1],
 																	(byte)ipV4[2],(byte)ipV4[3]});
-		System.out.println("Hostname"+addr1.getHostName());
+		//System.out.println("Hostname"+addr1.getHostName());
 		return addr1;
 	}
 
@@ -89,8 +89,12 @@ public class Request {
 		if (ipAddr.contains("@")){
 			setIpAddr(ipAddr.substring(1));
 		}
+		else{
+			System.out.println("ERROR 	IP address not valid: Enter IPv4 in @a.b.c.d format");			
+			return false;
+		}
 		if (!ipPatternValidator(getIpAddr()) || getIpAddr().contains("@")) {
-			System.out.println("IP address not valid");
+			System.out.println("ERROR 	IP address not valid: Enter IPv4 in @a.b.c.d format");
 			return false;
 		}
 		return true;
@@ -116,7 +120,7 @@ public class Request {
 	}
 
 
-	public void syntaxError(String error) {
-		System.out.println("ERROR: "+error+"\nDnsClient [-t timeout] [-r max-retries] [-p port] [-mx/-ns] @server name");
+	public void syntaxError() {
+		System.out.println("ERROR 	nDnsClient [-t timeout] [-r max-retries] [-p port] [-mx/-ns] @server name");
 	}
 }

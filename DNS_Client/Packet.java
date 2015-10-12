@@ -61,15 +61,16 @@ public class Packet {
 	private void packetQuestion(String name, int type ) {
 		this.qName = writeName(name);
 		this.qType = writeType(type);
-		this.qClass = 0x00f;
+		this.qClass = 0x0001;
 	}
+
+	 
 
 	public byte[] data() {
 		String name = this.name; 
 		int type = this.type; 
 		packetHeader();
 		packetQuestion(name,type);
-		packetAnswer();
 		ByteBuffer data =  ByteBuffer.allocate(520);
 		data.putShort(id);
 		data.putShort(flags);
@@ -80,24 +81,24 @@ public class Packet {
 		data.put(qName);
 		data.putShort(qType);
 		data.putShort(qClass);
-		for (int i =0; i<3; i++ ) {
-			data.putShort(aName);
-			data.putShort(aType);
-			data.putShort(aClass);
-			data.putShort(aTtl);
-			data.putShort(aRdLength);
-			data.putShort(aPreference);
-			data.put(aExchange);
-		}
+	//	for (int i =0; i<3; i++ ) {
+	//		data.putShort(aName);
+	//		data.putShort(aType);
+	//		data.putShort(aClass);
+	//		data.putShort(aTtl);
+	//		data.putShort(aRdLength);
+	//		data.putShort(aPreference);
+	//		data.put(aExchange);
+	//	}
 		System.out.println(new String(data.array()));
 		return data.array();
 
 	}
 
-	private void packetAnswer() {
+	/*private void packetAnswer() {
 		this.aName = this.aType = this.aClass = this.aTtl = this.aRdLength = this.aPreference = 0x0000;
 		this.aExchange = new byte[63];
-	}
+	}*/
 
 	private short writeType(int type) {
 		short value = 0; 
@@ -119,12 +120,12 @@ public class Packet {
 		ByteBuffer data =  ByteBuffer.allocate(32);
 		char[] buffer= new char[63];
 		int dataSize = name.toCharArray().length;
-		int counter = 0 ;
+		byte counter = 0 ;
 		int charCounter = 0;
 		for (char charData : name.toCharArray() ) {
 			charCounter++;
 			if ( charData == '.'){
-				data.put(String.valueOf(counter).getBytes());
+				data.put(counter);
 				for (int j = 0; j<counter; j++ ) {
 				 	data.put(String.valueOf(buffer[j]).getBytes(StandardCharsets.US_ASCII));
 				 } 
@@ -136,7 +137,7 @@ public class Packet {
 				counter ++;
 			}
 			if ( charCounter == dataSize) {
-				data.put(String.valueOf(counter).getBytes());
+				data.put(counter);
 				for (int j = 0; j<counter; j++ ) {
 				 	data.put(String.valueOf(buffer[j]).getBytes(StandardCharsets.US_ASCII));
 				 } 
@@ -144,8 +145,8 @@ public class Packet {
 				counter =0;
 			}
 		}
-		data.put(String.valueOf(0).getBytes());
-		return data.array() ;
+		data.put(counter);
+		return truncateBytebuffer(data).array() ;
 	}
 
 	private short idGenerator() {
@@ -154,6 +155,25 @@ public class Packet {
 		return id; 
 	}
 	
+	private ByteBuffer truncateBytebuffer (ByteBuffer b){
+		ByteBuffer copy = b.duplicate();
+		b.flip(); 
+		int size = 0;
+		while (b.hasRemaining()) {
+			System.out.println("t");
+			b.get();
+			size++;
+		}
+		ByteBuffer truncated = ByteBuffer.allocate(size);
+		copy.flip();
+		while (copy.hasRemaining()) {
+			System.out.println("s");
+			truncated.put(copy.get());
+		}
+
+		return truncated;
+	}
+
 	/*private void putShort(byte[] b, int off, short val) {
         b[off + 1] = (byte) (val >>> 0);
         b[off + 0] = (byte) (val >>> 8);

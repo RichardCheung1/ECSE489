@@ -33,7 +33,7 @@ public class Client {
 		request = new Request(ip); 
 		//Must have at least two field
 		if (argsArraySize < 2) {
-			System.out.println("Missing required arguments"); 
+			System.out.println("ERROR 	Missing required arguments: [@server] [name] are required"); 
 			return;
 		}
 		//If there's two or more field check for valid IP
@@ -66,7 +66,7 @@ public class Client {
 			 		error= request.isNumeric(args[i+1]);
 					int portValue = Integer.parseInt(args[i+1]);
 			 		request.setPort(portValue); 		
-			 		System.out.println("Set port to: "+ request.getPort() );
+			 		//System.out.println("Set port to: "+ request.getPort() );
 			 		break;
 			 	case "-mx":
 			 		request.setType(request.TYPE_MX_QUERY); 
@@ -76,7 +76,7 @@ public class Client {
 			 		break; 			
 			 }
 			 if (!error) {
-			 	System.out.println("Options Syntax"); 
+			 	System.out.println("Error 	Incorrect Options Syntax: Options [-t] [-r] [-p] only take numeric values"); 
 			 	return; 
 			 }
 		}
