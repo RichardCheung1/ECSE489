@@ -24,14 +24,11 @@ public class Client {
 		"([01]?\\d\\d?|2[0-4]\\d|25[0-5])$";
 	private static DNS.Request request; 
 	private static DNS.Packet packet; 
-	private static final int TYPE_A_QUERY=0;
-	private static final int TYPE_NS_QUERY=1;
-	private static final int TYPE_MX_QUERY=2;
+
 
 
 
 	public static void main (String[] args) {
-		int type = TYPE_A_QUERY; 
 		int argsArraySize = args.length;		
 		//Get name from command line
 		String name = args[argsArraySize-1]; 
@@ -70,21 +67,21 @@ public class Client {
 			 		break;	
 			 	case "-r":
 			 		error= isNumeric(args[i+1]);
-					int rvalue = Integer.parseInt(args[i+1]);
-			 		request.setMaxRetries(rvalue); 	
+					int rValue = Integer.parseInt(args[i+1]);
+			 		request.setMaxRetries(rValue); 	
 			 		//System.out.println("Set retries to: "+ request.getMaxRetries() );			 				 			 	
 			 		break;
 			 	case "-p":
 			 		error= isNumeric(args[i+1]);
-					int pvalue = Integer.parseInt(args[i+1]);
-			 		request.setPort(pvalue); 		
+					int portValue = Integer.parseInt(args[i+1]);
+			 		request.setPort(portValue); 		
 			 		//System.out.println("Set port to: "+ request.getPort() );
 			 		break;
 			 	case "-mx":
-			 		type = TYPE_MX_QUERY; 
+			 		request.setType(request.TYPE_MX_QUERY); 
 			 		break;
 			 	case "-ns":
-			 		type = TYPE_NS_QUERY;
+			 		request.setType(request.TYPE_NS_QUERY);
 			 		break; 			
 			 }
 			 if (!error) {
@@ -92,7 +89,7 @@ public class Client {
 			 	return; 
 			 }
 		}
-		packet = new Packet(name, type); 
+		packet = new Packet(name, request.getType() ); 
 
 		//DatagramSocket clientSocket = new DatagramSocket();
 

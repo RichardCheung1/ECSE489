@@ -15,16 +15,21 @@ import java.nio.ByteBuffer;
 
 public class Request {
 
-	private final int TIMEOUT_DEFAULT = 5; 
-	private final int MAX_RETRIES_DEFAULT = 3;
-	private final int PORT_DEFAULT = 53; 
-	private int timeout,maxRetries,port ;
+	public static final int TIMEOUT_DEFAULT = 5; 
+	public static final int MAX_RETRIES_DEFAULT = 3;
+	public static final int PORT_DEFAULT = 53; 
+	public static final int TYPE_A_QUERY=0;
+	public static final int TYPE_NS_QUERY=1;
+	public static final int TYPE_MX_QUERY=2;
+
+	private int timeout,maxRetries,port,type ;
 
 
 	public Request() {
 		timeout = TIMEOUT_DEFAULT; 
 		maxRetries = MAX_RETRIES_DEFAULT; 
 		port = PORT_DEFAULT; 
+		type =TYPE_A_QUERY;
 	}
 
 	public void setTimeOut (int time) { this.timeout = time; }
@@ -35,5 +40,8 @@ public class Request {
 
 	public void setPort (int port) { this.port = port ; }
 	public int getPort () { return this.port; }
+
+	public void setType (int port) { this.type = type ; }
+	public int getType () { return this.type; }
 
 }

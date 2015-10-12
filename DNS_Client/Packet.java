@@ -18,10 +18,6 @@ import java.util.List;
 
 public class Packet {
 
-	private static final int TYPE_A_QUERY=0;
-	private static final int TYPE_NS_QUERY=1;
-	private static final int TYPE_MX_QUERY=2;
-
 	private Random rng; 
 	//header fields
 	private short id;
@@ -74,13 +70,13 @@ public class Packet {
 	private short writeType(int type) {
 		short value = 0; 
 		switch (type) {
-			case TYPE_A_QUERY:
+			case DNS.Request.TYPE_A_QUERY:
 				value = 0x0001;
 				break;
-			case TYPE_NS_QUERY:
+			case DNS.Request.TYPE_NS_QUERY:
 				value = 0x0002;
 				break;
-			case TYPE_MX_QUERY:
+			case DNS.Request.TYPE_MX_QUERY:
 				value = 0x000f;
 				break;
 		}
