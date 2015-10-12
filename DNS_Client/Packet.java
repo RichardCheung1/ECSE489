@@ -18,7 +18,9 @@ import java.util.List;
 
 public class Packet {
 
-	private Random rng; 
+	private Random rng;
+	private String name;
+	private int type; 
 	//header fields
 	private short id;
 	private short flags; 
@@ -45,8 +47,8 @@ public class Packet {
 
 	}
 	public Packet(String name, int type) {
-		packetHeader(); 
-		packetQuestion(name,type);
+		this.name = name;
+		this.type = type;
 	}
 
 	private void packetHeader() {
@@ -62,10 +64,39 @@ public class Packet {
 		this.qClass = 0x00f;
 	}
 
-	/*private void packetAnswer() {
-		this.name = this.type = this.class = this.ttl = this.rdLength = this.preference = 0x0000;
+	public byte[] data() {
+		String name = this.name; 
+		int type = this.type; 
+		System.out.println(name+type);
+		packetHeader();
+		packetQuestion(name,type);
+		ByteBuffer data =  ByteBuffer.allocate(1500);
+		data.putShort(id);
+		data.putShort(flags);
+		data.putShort(qdCount);
+		data.putShort(anCount);
+		data.putShort(nsCount);
+		data.putShort(arCount);
+		data.put(qName);
+		data.putShort(qType);
+		data.putShort(qClass);
+		//for (int i =0; i<3; i++ ) {
+			data.putShort(aName);
+			data.putShort(aType);
+			//data.putShort(aClass);
+			//data.putShort(aTtl);
+			//data.putShort(aRdLength);
+			//data.putShort(aPreference);
+			//data.put(aExchange);
+		//}
+		System.out.println(new String(data.array(),StandardCharsets.US_ASCII ));
+		return data.array();
 
-	}*/
+	}
+
+	private void packetAnswer() {
+		this.aName = this.aType = this.aClass = this.aTtl = this.aRdLength = this.aPreference = 0x0000;
+	}
 
 	private short writeType(int type) {
 		short value = 0; 
@@ -80,7 +111,6 @@ public class Packet {
 				value = 0x000f;
 				break;
 		}
-		System.out.println("Qtype:"+ value); 
 		return value;
 	}
 
@@ -114,18 +144,15 @@ public class Packet {
 			}
 		}
 		data.put(String.valueOf(0).getBytes(StandardCharsets.US_ASCII));
-
-		System.out.println("Qname: "+new String(data.array(), StandardCharsets.US_ASCII));
 		return data.array() ;
 	}
 
 	private short idGenerator() {
 		rng = new Random(); 
 		short id = (short) rng.nextInt(Short.MAX_VALUE+1);
-		System.out.println("Packet ID : " +id);
 		return id; 
 	}
-
+	
 	/*private void putShort(byte[] b, int off, short val) {
         b[off + 1] = (byte) (val >>> 0);
         b[off + 0] = (byte) (val >>> 8);
