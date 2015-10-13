@@ -16,6 +16,7 @@ import java.nio.charset.*;
 import java.nio.*;
 import java.util.Random;
 import java.util.List;
+import java.util.Arrays;
 
 public class Packet {
 	//Constants 
@@ -39,16 +40,18 @@ public class Packet {
 	private short qType;
 	private short qClass; 
 	//RR fields
-//	private ByteBuffer answerName;
+	private int answerAA;
 	private int answerType;
 	private int answerClass;
 	private int answerTtl;
 	private int answerRdLength;
 	private String answerRdata;
+	private String answerCname;
 //	private ByteBuffer answerPreference;
 //	private ByteBuffer answerExchange;
 	//cached size
 	private int qNameSize;
+	private int cNameSize;
 	private final int HEADER_SIZE = 12;
 
 //Initiate packet with default values
@@ -95,74 +98,124 @@ public class Packet {
 	public void decodeAnswer (byte[] receivedPacket) {
 		int qNameSize = this.qNameSize;
 		int byteCounter = 0;
-		String[] answerStringByte = new String[1500];
+		String[] binaryPacket = new String[1500];
 		byte byte1;
 		ByteBuffer dup = ByteBuffer.wrap(receivedPacket);
 		//transforms receivedPackets into unsigned Int 
 		while(dup.hasRemaining()) {
 			byte1 = dup.get();
-			answerStringByte[byteCounter] = String.format("%8s",Integer.toBinaryString(Byte.toUnsignedInt(byte1))).replace(' ', '0');
+			binaryPacket[byteCounter] = String.format("%8s",Integer.toBinaryString(Byte.toUnsignedInt(byte1))).replace(' ', '0');
 			byteCounter++;
 		}
-		int answerCount = Integer.valueOf(answerStringByte[6].concat(answerStringByte[7]));
+		int answerCount = Integer.valueOf(binaryPacket[6].concat(binaryPacket[7]),2);
 		System.out.println("***Answer Section ("+ answerCount +" records)***");
 		byteCounter = HEADER_SIZE+qNameSize+4;
 		if (answerCount > 0){
-			if( Integer.valueOf(answerStringByte[byteCounter]) == 11000000  ) {
-				//TO DO: Auth bit
-
-				//next byte is the pointer HEADER_SIZE+qNameSize+4+1
-				byteCounter  = byteCounter+2;
-				//gets Type bytes
-				this.answerType = Integer.valueOf(answerStringByte[byteCounter].concat(answerStringByte[byteCounter+1]),2);
-				byteCounter = byteCounter+2;
-				//gets Class bytes
-				this.answerClass = Integer.valueOf(answerStringByte[byteCounter].concat(answerStringByte[byteCounter+1]),2);
-				//gets TTL bytes
-				byteCounter = byteCounter+2;
-				StringBuilder sb = new StringBuilder ();
-				for ( int i= 0; i <4 ; i++ ) {
-					sb.append(answerStringByte[byteCounter+i]);
-				}
-				byteCounter= byteCounter+4;
-				this.answerTtl = Integer.valueOf(sb.toString(),2);
-				//gets RDlength bytes
-				this.answerRdLength = Integer.valueOf(answerStringByte[byteCounter].concat(answerStringByte[byteCounter+1]),2);
-				byteCounter= byteCounter+2;
-
-				//Rdata cases
-				if (this.answerType == TYPE_A_RR) {
-					//4 octects
-					sb = new StringBuilder();
-					for (int i = 0; i<4 ; i++ ) {
-						sb.append(Integer.valueOf(answerStringByte[byteCounter+i],2).toString());
-						if( i<3) {
-							sb.append(".");
+			for (int pi = 1; pi < answerCount ; pi++) {
+				if( Integer.valueOf(binaryPacket[byteCounter]) == 11000000  ) {
+					//gets Flags bytes
+					int flagCounter=0; 
+					for (char c : binaryPacket[2].toCharArray() ) {
+						flagCounter++;
+						if (flagCounter == 6){
+						//gets the AA flag
+							this.answerAA= Integer.valueOf(new String(new char[] {c}));
 						}
 					}
-					this.answerRdata = sb.toString();
+					//next byte is the pointer HEADER_SIZE+qNameSize+4+1
+					byteCounter  = byteCounter+2;
+					//gets Type bytes
+					this.answerType = Integer.valueOf(binaryPacket[byteCounter].concat(binaryPacket[byteCounter+1]),2);
+					byteCounter = byteCounter+2;
+					//gets Class bytes
+					this.answerClass = Integer.valueOf(binaryPacket[byteCounter].concat(binaryPacket[byteCounter+1]),2);
+					//gets TTL bytes
+					byteCounter = byteCounter+2;
+					StringBuilder sb = new StringBuilder ();
+					for ( int i= 0; i <4 ; i++ ) {
+						sb.append(binaryPacket[byteCounter+i]);
+					}
+					byteCounter= byteCounter+4;
+					this.answerTtl = Integer.valueOf(sb.toString(),2);
+					//gets RDlength bytes
+					this.answerRdLength = Integer.valueOf(binaryPacket[byteCounter].concat(binaryPacket[byteCounter+1]),2);
+					byteCounter= byteCounter+2;
+					System.out.println("RD="+answerRdLength);
+
+					//Rdata cases
+					if (this.answerType == TYPE_A_RR) {
+						//4 octects
+						sb = new StringBuilder();
+						for (int i = 0; i<4 ; i++ ) {
+							sb.append(Integer.valueOf(binaryPacket[byteCounter+i],2).toString());
+							if( i<3) {
+								sb.append(".");
+							}
+						}
+						this.answerRdata = sb.toString();
+						byteCounter = byteCounter+2;
+					}
+					if (this.answerType == TYPE_NS_RR) {
+						//TO DO:
+					}
+					if (this.answerType == TYPE_CNAME_RR) {
+						int pointer =0; 
+						boolean pointerFlag= false;
+						loop:
+						for(int i =0 ; i<63; i++){
+							//System.out.println(binaryPacket[byteCounter+i]);
+							// if  pointer
+							if (Integer.valueOf(binaryPacket[byteCounter+i]) == 11000000){
+								byteCounter = byteCounter+i;
+								pointer = Integer.valueOf(binaryPacket[byteCounter+1],2);
+								byteCounter = byteCounter+1;
+								this.cNameSize = i;
+								pointerFlag = true;
+								break loop;
+							}
+							// if no pointer
+							if (Integer.valueOf(binaryPacket[byteCounter+i]) == 00000000) {
+								byteCounter = byteCounter+i;
+								this.cNameSize = i;
+								break loop;								
+							}
+						}
+						//System.out.println(this.cNameSize);
+						int cSize = pointerFlag? (this.cNameSize+1): this.cNameSize;	
+						//System.out.println(cSize);
+						String cname = new String(Arrays.copyOfRange(receivedPacket,byteCounter-cSize,byteCounter),StandardCharsets.US_ASCII);
+						int namesize = 0;
+						loop:
+						for (int w = 0; w < 63 ; w++ ) {
+							namesize++;
+							if (Integer.valueOf(binaryPacket[pointer+w]) == 00000000) {
+								break loop;
+							}
+						}
+						String pointerString = new String(Arrays.copyOfRange(receivedPacket,pointer,pointer+namesize),StandardCharsets.US_ASCII);
+
+						cname = cname.concat(pointerString);
+						
+													
+												}						
+					}
+					if (this.answerType == TYPE_MX_RR) {
+						//to do
+					}
+					printResults(this.answerType);
 				}
-				if (this.answerType == TYPE_NS_RR) {
-					//to do
+			
+				else {
+					System.out.println("NOTFOUND");
 				}
-				if (this.answerType == TYPE_CNAME_RR) {
-					//to do
-				}
-				if (this.answerType == TYPE_MX_RR) {
-					//to do
-				}
-				printResults(this.answerType);
 			}
-		}
-		else {
-			System.out.println("NOTFOUND");
 		}
 	}
 
 	public void printResults(int type) {
 		if (type == TYPE_A_RR){
 			System.out.println("Response Type 	Type A RR"+"	TTL 	"+this.answerTtl);		
-			System.out.println("IP 	"+this.answerRdata+" 	[seconds can cache]		[auth/nonauth]");
+			System.out.println("IP 	"+this.answerRdata+" 	[seconds can cache]		"+((this.answerAA == 0)? "Non-Authoritative":"Authoritative"));
 			System.out.println("");
 		}
 	}
