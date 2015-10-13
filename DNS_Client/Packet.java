@@ -11,8 +11,9 @@ Packet.java
 package DNS; 
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.nio.ByteBuffer;
+
+import java.nio.charset.*;
+import java.nio.*;
 import java.util.Random;
 import java.util.List;
 
@@ -34,13 +35,16 @@ public class Packet {
 	private short qType;
 	private short qClass; 
 	//RR fields
-	private short aName;
-	private short aType;
-	private short aClass;
-	private short aTtl;
-	private short aRdLength;
-	private short aPreference;
-	private byte[] aExchange;
+	private ByteBuffer answerName;
+	private ByteBuffer answerType;
+	private ByteBuffer answerClass;
+	private ByteBuffer answerTtl;
+	private ByteBuffer answerRdLength;
+	private ByteBuffer answerPreference;
+	private ByteBuffer answerExchange;
+	//cached size
+	private int qNameSize;
+	private final int HEADER_SIZE = 12;
 
 //empty constructor
 	public Packet() {
@@ -64,7 +68,6 @@ public class Packet {
 		this.qClass = 0x0001;
 	}
 
-	 
 
 	public byte[] data() {
 		String name = this.name; 
@@ -81,26 +84,37 @@ public class Packet {
 		data.put(qName);
 		data.putShort(qType);
 		data.putShort(qClass);
-	//	for (int i =0; i<3; i++ ) {
-	//		data.putShort(aName);
-	//		data.putShort(aType);
-	//		data.putShort(aClass);
-	//		data.putShort(aTtl);
-	//		data.putShort(aRdLength);
-	//		data.putShort(aPreference);
-	//		data.put(aExchange);
-	//	}
-		System.out.println(new String(data.array()));
-		return data.array();
+		return truncateBytebuffer(data).array();
 
 	}
 
-	/*private void packetAnswer() {
-		this.aName = this.aType = this.aClass = this.aTtl = this.aRdLength = this.aPreference = 0x0000;
-		this.aExchange = new byte[63];
-	}*/
+	public void packetAnswer(byte[] receivedPacket) {
+		int qNameSize = this.qNameSize;
+		int byteCounter = 0;
+		String[] answerStringByte = new String[1500];
+		byte byte1;
+		ByteBuffer dup = ByteBuffer.wrap(receivedPacket);
+		while(dup.hasRemaining()) {
+			byte1 = dup.get();
+			//System.out.println(Byte.toUnsignedInt(byte1));
+			answerStringByte[byteCounter] = Integer.toBinaryString(Byte.toUnsignedInt(byte1));
+			byteCounter++;
+		}
+		int answerCount = Integer.valueOf(answerStringByte[6].concat(answerStringByte[7]));
+		System.out.println("***Answer Section ("+ answerCount+" records)***");
+
+		if (answerCount > 0){
+
+		}
+		else {
+			System.out.println("NOTFOUND");
+		}
+
+		return;
+	}
 
 	private short writeType(int type) {
+
 		short value = 0; 
 		switch (type) {
 			case DNS.Request.TYPE_A_QUERY:
@@ -146,6 +160,7 @@ public class Packet {
 			}
 		}
 		data.put(counter);
+		this.qNameSize = truncateBytebuffer(data).capacity(); 
 		return truncateBytebuffer(data).array() ;
 	}
 
@@ -160,14 +175,12 @@ public class Packet {
 		b.flip(); 
 		int size = 0;
 		while (b.hasRemaining()) {
-			System.out.println("t");
 			b.get();
 			size++;
 		}
 		ByteBuffer truncated = ByteBuffer.allocate(size);
 		copy.flip();
 		while (copy.hasRemaining()) {
-			System.out.println("s");
 			truncated.put(copy.get());
 		}
 
