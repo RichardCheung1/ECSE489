@@ -18,7 +18,11 @@ import java.util.Random;
 import java.util.List;
 
 public class Packet {
-
+	//Constants 
+	public final int TYPE_A_RR = 0X0001;
+	public final int TYPE_NS_RR = 0x0002;
+	public final int TYPE_CNAME_RR =0x005;
+	public final int TYPE_MX_RR = 0x000f;
 	private Random rng;
 	private String name;
 	private int type; 
@@ -35,18 +39,19 @@ public class Packet {
 	private short qType;
 	private short qClass; 
 	//RR fields
-	private ByteBuffer answerName;
-	private ByteBuffer answerType;
-	private ByteBuffer answerClass;
-	private ByteBuffer answerTtl;
-	private ByteBuffer answerRdLength;
-	private ByteBuffer answerPreference;
-	private ByteBuffer answerExchange;
+//	private ByteBuffer answerName;
+	private int answerType;
+	private int answerClass;
+	private int answerTtl;
+	private int answerRdLength;
+	private String answerRdata;
+//	private ByteBuffer answerPreference;
+//	private ByteBuffer answerExchange;
 	//cached size
 	private int qNameSize;
 	private final int HEADER_SIZE = 12;
 
-//empty constructor
+//Initiate packet with default values
 	public Packet() {
 
 	}
@@ -67,8 +72,7 @@ public class Packet {
 		this.qType = writeType(type);
 		this.qClass = 0x0001;
 	}
-
-
+// Create byte[] packet to DatagramPacket
 	public byte[] data() {
 		String name = this.name; 
 		int type = this.type; 
@@ -88,33 +92,82 @@ public class Packet {
 
 	}
 
-	public void packetAnswer(byte[] receivedPacket) {
+	public void decodeAnswer (byte[] receivedPacket) {
 		int qNameSize = this.qNameSize;
 		int byteCounter = 0;
 		String[] answerStringByte = new String[1500];
 		byte byte1;
 		ByteBuffer dup = ByteBuffer.wrap(receivedPacket);
+		//transforms receivedPackets into unsigned Int 
 		while(dup.hasRemaining()) {
 			byte1 = dup.get();
-			//System.out.println(Byte.toUnsignedInt(byte1));
-			answerStringByte[byteCounter] = Integer.toBinaryString(Byte.toUnsignedInt(byte1));
+			answerStringByte[byteCounter] = String.format("%8s",Integer.toBinaryString(Byte.toUnsignedInt(byte1))).replace(' ', '0');
 			byteCounter++;
 		}
 		int answerCount = Integer.valueOf(answerStringByte[6].concat(answerStringByte[7]));
-		System.out.println("***Answer Section ("+ answerCount+" records)***");
-
+		System.out.println("***Answer Section ("+ answerCount +" records)***");
+		byteCounter = HEADER_SIZE+qNameSize+4;
 		if (answerCount > 0){
+			if( Integer.valueOf(answerStringByte[byteCounter]) == 11000000  ) {
+				//TO DO: Auth bit
 
+				//next byte is the pointer HEADER_SIZE+qNameSize+4+1
+				byteCounter  = byteCounter+2;
+				//gets Type bytes
+				this.answerType = Integer.valueOf(answerStringByte[byteCounter].concat(answerStringByte[byteCounter+1]),2);
+				byteCounter = byteCounter+2;
+				//gets Class bytes
+				this.answerClass = Integer.valueOf(answerStringByte[byteCounter].concat(answerStringByte[byteCounter+1]),2);
+				//gets TTL bytes
+				byteCounter = byteCounter+2;
+				StringBuilder sb = new StringBuilder ();
+				for ( int i= 0; i <4 ; i++ ) {
+					sb.append(answerStringByte[byteCounter+i]);
+				}
+				byteCounter= byteCounter+4;
+				this.answerTtl = Integer.valueOf(sb.toString(),2);
+				//gets RDlength bytes
+				this.answerRdLength = Integer.valueOf(answerStringByte[byteCounter].concat(answerStringByte[byteCounter+1]),2);
+				byteCounter= byteCounter+2;
+
+				//Rdata cases
+				if (this.answerType == TYPE_A_RR) {
+					//4 octects
+					sb = new StringBuilder();
+					for (int i = 0; i<4 ; i++ ) {
+						sb.append(Integer.valueOf(answerStringByte[byteCounter+i],2).toString());
+						if( i<3) {
+							sb.append(".");
+						}
+					}
+					this.answerRdata = sb.toString();
+				}
+				if (this.answerType == TYPE_NS_RR) {
+					//to do
+				}
+				if (this.answerType == TYPE_CNAME_RR) {
+					//to do
+				}
+				if (this.answerType == TYPE_MX_RR) {
+					//to do
+				}
+				printResults(this.answerType);
+			}
 		}
 		else {
 			System.out.println("NOTFOUND");
 		}
+	}
 
-		return;
+	public void printResults(int type) {
+		if (type == TYPE_A_RR){
+			System.out.println("Response Type 	Type A RR"+"	TTL 	"+this.answerTtl);		
+			System.out.println("IP 	"+this.answerRdata+" 	[seconds can cache]		[auth/nonauth]");
+			System.out.println("");
+		}
 	}
 
 	private short writeType(int type) {
-
 		short value = 0; 
 		switch (type) {
 			case DNS.Request.TYPE_A_QUERY:

@@ -96,7 +96,7 @@ public class Client {
 		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 		clientSocket.receive(receivePacket);
 
-		packet.packetAnswer(receivePacket.getData());
+		packet.decodeAnswer(receivePacket.getData());
 		clientSocket.close();
 
 	}
