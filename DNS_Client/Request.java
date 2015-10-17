@@ -78,9 +78,7 @@ public class Request {
 			ipV4[counter]= Integer.valueOf(s);
 			counter++;
 		}
-		InetAddress addr1 = InetAddress.getByAddress(new byte [] {(byte)ipV4[0],(byte)ipV4[1],
-																	(byte)ipV4[2],(byte)ipV4[3]});
-		//System.out.println("Hostname"+addr1.getHostName());
+		InetAddress addr1 = InetAddress.getByAddress(new byte [] {(byte)ipV4[0],(byte)ipV4[1],(byte)ipV4[2],(byte)ipV4[3]});
 		return addr1;
 	}
 
