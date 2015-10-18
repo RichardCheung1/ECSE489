@@ -112,7 +112,6 @@ public class Packet {
 		if (answerCount > 0){
 		System.out.println("***Answer Section ("+ answerCount +" records)***");			
 			for (int pi = 0; pi < answerCount ; pi++) {
-				//System.out.println(Integer.valueOf(binaryPacket[byteCounter]));
 				if( Integer.valueOf(binaryPacket[byteCounter]) == 11000000  ) {
 					//gets Flags bytes
 					int flagCounter=0; 
@@ -126,9 +125,7 @@ public class Packet {
 					//next byte is the pointer HEADER_SIZE+qNameSize+4+1
 					byteCounter  = byteCounter+2;
 					//gets Type bytes
-
 					this.answerType = Integer.valueOf(binaryPacket[byteCounter].concat(binaryPacket[byteCounter+1]),2);
-					//System.out.println(this.answerType);
 					byteCounter = byteCounter+2;
 					//gets Class bytes
 					this.answerClass = Integer.valueOf(binaryPacket[byteCounter].concat(binaryPacket[byteCounter+1]),2);
@@ -143,7 +140,6 @@ public class Packet {
 					//gets RDlength bytes
 					this.answerRdLength = Integer.valueOf(binaryPacket[byteCounter].concat(binaryPacket[byteCounter+1]),2);
 					byteCounter= byteCounter+2;
-					//System.out.println("RD="+answerRdLength);
 					//Rdata cases
 					if (this.answerType == TYPE_A_RR) {
 						//4 octects
@@ -162,7 +158,6 @@ public class Packet {
 						boolean pointerFlag= false;
 						loop:
 						for(int i =0 ; i<63; i++){
-							//System.out.println(binaryPacket[byteCounter+i]);
 							// if  pointer
 							if (Integer.valueOf(binaryPacket[byteCounter+i]) == 11000000){
 								byteCounter = byteCounter+i;
@@ -179,11 +174,8 @@ public class Packet {
 								break loop;								
 							}
 						}
-						//System.out.println("csize+"+this.cNameSize);
 						int cSize = pointerFlag ? (this.cNameSize+1): this.cNameSize;	
-						//System.out.println("csize"+cSize);
 						String cname = new String(Arrays.copyOfRange(receivedPacket,byteCounter-cSize,byteCounter),StandardCharsets.US_ASCII);
-						//System.out.println(cname);
 						int namesize = 0;
 						loop:
 						for (int w = 0; w < 63 ; w++ ) {
@@ -194,12 +186,10 @@ public class Packet {
 						}
 						if (pointerFlag == true) {
 							String pointerString = new String(Arrays.copyOfRange(receivedPacket,pointer+1,pointer+namesize),StandardCharsets.US_ASCII);
-							//System.out.println("pntr = string "+ pointerString);
 							cname = cname.concat(pointerString);
 						}
 						int characterCounter = 0;
 						sb = new StringBuilder();
-						//System.out.println(cname);
 						this.answerCname = formatAcsiiString(cname);
 						byteCounter = byteCounter+1;					
 					}
@@ -208,7 +198,6 @@ public class Packet {
 						boolean pointerFlag= false;
 						loop:
 						for(int i =0 ; i<63; i++){
-							//System.out.println(binaryPacket[byteCounter+i]);
 							// if  pointer
 							if (Integer.valueOf(binaryPacket[byteCounter+i]) == 11000000){
 								byteCounter = byteCounter+i;
@@ -225,12 +214,9 @@ public class Packet {
 								break loop;								
 							}
 						}
-						//System.out.println(this.cNameSize);
 						int cSize = pointerFlag ? (this.cNameSize+1): this.cNameSize;	
-						//System.out.println(cSize);
 						String cname = new String(Arrays.copyOfRange(receivedPacket,byteCounter-cSize,byteCounter),StandardCharsets.US_ASCII);
 						System.out.println(cname);
-
 						int namesize = 0;
 						loop:
 						for (int w = 0; w < 63 ; w++ ) {
@@ -243,10 +229,8 @@ public class Packet {
 						cname = cname.concat(pointerString);
 						int characterCounter = 0;
 						sb = new StringBuilder(); 
-						//System.out.println(cname);
 						this.answerCname = formatAcsiiString(cname);
 						byteCounter = byteCounter+1;
-						//System.out.println(binaryPacket[byteCounter]);
 					}
 					if (this.answerType == TYPE_MX_RR) {
 						int pointer =0; 
@@ -255,7 +239,6 @@ public class Packet {
 						byteCounter = byteCounter+2;
 						loop:
 						for(int i =0 ; i<63; i++){
-							//System.out.println(binaryPacket[byteCounter+i]);
 							// if  pointer
 							if (Integer.valueOf(binaryPacket[byteCounter+i]) == 11000000){
 								byteCounter = byteCounter+i;
@@ -272,12 +255,8 @@ public class Packet {
 								break loop;								
 							}
 						}
-						//System.out.println(this.cNameSize);
 						int cSize = pointerFlag ? (this.cNameSize+1): this.cNameSize;	
-						//System.out.println(cSize);
 						String cname = new String(Arrays.copyOfRange(receivedPacket,byteCounter-cSize,byteCounter),StandardCharsets.US_ASCII);
-						//System.out.println(cname);
-
 						int namesize = 0;
 						loop:
 						for (int w = 0; w < 63 ; w++ ) {
@@ -290,10 +269,9 @@ public class Packet {
 						cname = cname.concat(pointerString);
 						int characterCounter = 0;
 						sb = new StringBuilder(); 
-						//System.out.println(cname);
 						this.answerCname = formatAcsiiString(cname);
 						byteCounter = byteCounter+1;
-											}
+					}
 					printResults(this.answerType);
 				}
 				else {
@@ -411,12 +389,6 @@ public class Packet {
 		while (copy.hasRemaining()) {
 			truncated.put(copy.get());
 		}
-
 		return truncated;
 	}
-
-	/*private void putShort(byte[] b, int off, short val) {
-        b[off + 1] = (byte) (val >>> 0);
-        b[off + 0] = (byte) (val >>> 8);
-   }*/
 }
