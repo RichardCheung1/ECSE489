@@ -76,7 +76,7 @@ public class Client {
 			 		break; 			
 			 }
 			 if (!error) {
-			 	System.out.println("Error 	Incorrect Options Syntax: Options [-t] [-r] [-p] only take numeric values"); 
+			 	System.out.println("ERROR 	Incorrect Options Syntax: Options [-t] [-r] [-p] only take numeric values"); 
 			 	return; 
 			 }
 		}
@@ -85,19 +85,34 @@ public class Client {
 		clientSocket.setSoTimeout(request.getTimeOut());	
 		byte[] receiveData = new byte[1024];
 		byte[] packetData = packet.data();
-		InetAddress ipAddress = request.ipData();
-
-		System.out.println("DnsClient sending request for "+name); 
-		System.out.println("Server: "+ request.getIpAddr());
-		System.out.println("Request Type: " + request.getStringType());
-		DatagramPacket sendPacket = new DatagramPacket(packetData, packetData.length, ipAddress, request.getPort());
-		clientSocket.send(sendPacket);
-
-		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-		clientSocket.receive(receivePacket);
-
-		packet.decodeAnswer(receivePacket.getData());
-		clientSocket.close();
-
+		int counter = 0;
+		boolean passed = false; 
+		loop:
+		while (true) {
+			if (passed) {
+				break loop;
+			}
+			try {
+				InetAddress ipAddress = request.ipData();
+				System.out.println("DnsClient sending request for "+name); 
+				System.out.println("Server: "+ request.getIpAddr());
+				System.out.println("Request Type: " + request.getStringType());
+				DatagramPacket sendPacket = new DatagramPacket(packetData, packetData.length, ipAddress, request.getPort());
+				clientSocket.send(sendPacket);
+				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+				clientSocket.receive(receivePacket);
+				packet.decodeAnswer(receivePacket.getData());
+				clientSocket.close();
+				passed= true;
+			}
+			catch ( SocketTimeoutException e ){
+				if (counter == request.getMaxRetries()){
+					System.out.println("ERROR 	Maximum number of retires "+ request.getMaxRetries() + " exceeded");
+					break loop;
+				}
+				System.out.println("Retrying...");
+				counter++;
+			}
+		}
 	}
 }
