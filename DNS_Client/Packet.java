@@ -46,7 +46,7 @@ public class Packet {
 	private int answerRdLength;
 	private String answerRdata;
 	private String answerCname;
-	private String answerPreference;
+	private int answerPreference;
 	private String answerExchange;
 	//cached size
 	private int qNameSize;
@@ -107,10 +107,10 @@ public class Packet {
 			byteCounter++;
 		}
 		int answerCount = Integer.valueOf(binaryPacket[6].concat(binaryPacket[7]),2);
-		System.out.println("***Answer Section ("+ answerCount +" records)***");
 		byteCounter = HEADER_SIZE+qNameSize+4;
 		StringBuilder sb = new StringBuilder();
 		if (answerCount > 0){
+		System.out.println("***Answer Section ("+ answerCount +" records)***");			
 			for (int pi = 0; pi < answerCount ; pi++) {
 				//System.out.println(Integer.valueOf(binaryPacket[byteCounter]));
 				if( Integer.valueOf(binaryPacket[byteCounter]) == 11000000  ) {
@@ -229,7 +229,7 @@ public class Packet {
 						int cSize = pointerFlag ? (this.cNameSize+1): this.cNameSize;	
 						//System.out.println(cSize);
 						String cname = new String(Arrays.copyOfRange(receivedPacket,byteCounter-cSize,byteCounter),StandardCharsets.US_ASCII);
-						//System.out.println(cname);
+						System.out.println(cname);
 
 						int namesize = 0;
 						loop:
@@ -249,8 +249,51 @@ public class Packet {
 						//System.out.println(binaryPacket[byteCounter]);
 					}
 					if (this.answerType == TYPE_MX_RR) {
-						//to do
-					}
+						int pointer =0; 
+						boolean pointerFlag= false;
+						this.answerPreference = Integer.valueOf(binaryPacket[byteCounter].concat(binaryPacket[byteCounter+1]),2);
+						byteCounter = byteCounter+2;
+						loop:
+						for(int i =0 ; i<63; i++){
+							//System.out.println(binaryPacket[byteCounter+i]);
+							// if  pointer
+							if (Integer.valueOf(binaryPacket[byteCounter+i]) == 11000000){
+								byteCounter = byteCounter+i;
+								pointer = Integer.valueOf(binaryPacket[byteCounter+1],2);
+								byteCounter = byteCounter+1;
+								this.cNameSize = i;
+								pointerFlag = true;
+								break loop;
+							}
+							// if no pointer
+							if (Integer.valueOf(binaryPacket[byteCounter+i]) == 00000000) {
+								byteCounter = byteCounter+i;
+								this.cNameSize = i;
+								break loop;								
+							}
+						}
+						//System.out.println(this.cNameSize);
+						int cSize = pointerFlag ? (this.cNameSize+1): this.cNameSize;	
+						//System.out.println(cSize);
+						String cname = new String(Arrays.copyOfRange(receivedPacket,byteCounter-cSize,byteCounter),StandardCharsets.US_ASCII);
+						//System.out.println(cname);
+
+						int namesize = 0;
+						loop:
+						for (int w = 0; w < 63 ; w++ ) {
+							namesize++;
+							if (Integer.valueOf(binaryPacket[pointer+w]) == 00000000) {
+								break loop;
+							}
+						}
+						String pointerString = new String(Arrays.copyOfRange(receivedPacket,pointer+1,pointer+namesize),StandardCharsets.US_ASCII);
+						cname = cname.concat(pointerString);
+						int characterCounter = 0;
+						sb = new StringBuilder(); 
+						//System.out.println(cname);
+						this.answerCname = formatAcsiiString(cname);
+						byteCounter = byteCounter+1;
+											}
 					printResults(this.answerType);
 				}
 				else {
@@ -293,6 +336,9 @@ public class Packet {
 		}
 		if (type == TYPE_NS_RR) {
 			System.out.println("NS 		" + this.answerCname + " 	[seconds can cache]		"+((this.answerAA == 0)? "Non-Authoritative":"Authoritative"));
+		}
+		if (type == TYPE_MX_RR) {
+			System.out.println("MX 		" + this.answerCname + "	" + this.answerPreference + "	" + "[seconds can cache]	" + ((this.answerAA == 0)? "Non-Authoritative":"Authoritative"));
 		}
 	}
 
