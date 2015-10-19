@@ -61,7 +61,7 @@ public class Packet {
 		this.name = name;
 		this.type = type;
 	}
-
+	
 	private void packetHeader() {
 		this.id = idGenerator(); 
 		this.flags = 0x0100; //256
@@ -93,7 +93,7 @@ public class Packet {
 		return truncateBytebuffer(data).array();
 
 	}
-
+	// decypher received packet
 	public void decodeAnswer (byte[] receivedPacket) {
 		int qNameSize = this.qNameSize;
 		int byteCounter = 0;
