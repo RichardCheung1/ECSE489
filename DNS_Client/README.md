@@ -1,15 +1,22 @@
 To compile: 
+
 javac -d . Packet.java
+
 javac -d . Request.java
+
 javac -d . Client.java
 
+
 To run:
+
 @school
+
 java DNS.Client -t 10 -r 2 -p 3 @132.206.85.18 www.mcgill.ca
 
 java DNS.Client @132.206.85.18 www.mcgill.ca
 
 @home
+
 java DNS.Client @8.8.8.8 www.mcgill.ca
 
 java DNS.Client @8.8.8.8 www.facebook.com
