@@ -107,11 +107,32 @@ public class Packet {
 			byteCounter++;
 		}
 		int answerCount = Integer.valueOf(binaryPacket[6].concat(binaryPacket[7]),2);
+		int authorityCount = Integer.valueOf(binaryPacket[8].concat(binaryPacket[9]),2);
+		int addCount = Integer.valueOf(binaryPacket[10].concat(binaryPacket[11]),2);		
 		byteCounter = HEADER_SIZE+qNameSize+4;
 		StringBuilder sb = new StringBuilder();
-		if (answerCount > 0){
-		System.out.println("***Answer Section ("+ answerCount +" records)***");			
-			for (int pi = 0; pi < answerCount ; pi++) {
+		int rcodeCounter = 0;
+		for (char c : binaryPacket[3].toCharArray() ) {
+			rcodeCounter ++;
+			if (rcodeCounter > 4) {
+				sb.append(c);
+			}
+		}
+		if (Integer.valueOf(sb.toString(),2) != 0) {
+			System.out.println("ERROR		Unexpected Response: 	Incorrect name server");
+			return;
+		}
+		else if (answerCount+authorityCount+addCount > 0){
+			if (answerCount >= 0) {
+				System.out.println("***Answer Section ("+ answerCount +" records)***");	
+			}
+			if (authorityCount > 0) {
+				System.out.println("***Contains "+ authorityCount+ " Authoritative Resource Records (NO DISPLAY)***");
+			}
+			for (int pi = 0; pi < answerCount+authorityCount+addCount ; pi++) {
+				if( pi == (answerCount+authorityCount)) {
+					System.out.println("***Addtional Section ("+ answerCount +" records)***");			
+				}
 				if( Integer.valueOf(binaryPacket[byteCounter]) == 11000000  ) {
 					//gets Flags bytes
 					int flagCounter=0; 
@@ -216,7 +237,6 @@ public class Packet {
 						}
 						int cSize = pointerFlag ? (this.cNameSize+1): this.cNameSize;	
 						String cname = new String(Arrays.copyOfRange(receivedPacket,byteCounter-cSize,byteCounter),StandardCharsets.US_ASCII);
-						System.out.println(cname);
 						int namesize = 0;
 						loop:
 						for (int w = 0; w < 63 ; w++ ) {
@@ -306,17 +326,17 @@ public class Packet {
 	public void printResults(int type) {
 		if (type == TYPE_A_RR){
 			//System.out.println("Response Type 	Type A RR"+"	TTL 	"+this.answerTtl);		
-			System.out.println("IP 		" + this.answerRdata + " 		[seconds can cache]		"+((this.answerAA == 0)? "Non-Authoritative":"Authoritative"));
+			System.out.println("IP 		" + this.answerRdata + " 		"+this.answerTtl+"		"+((this.answerAA == 0)? "Non-Authoritative":"Authoritative"));
 			//System.out.println("");
 		}
 		if (type == TYPE_CNAME_RR) {
-			System.out.println("CNAME 		" + this.answerCname + " 	[seconds can cache]		"+((this.answerAA == 0)? "Non-Authoritative":"Authoritative"));
+			System.out.println("CNAME 		" + this.answerCname +" 		"+this.answerTtl+"		"+((this.answerAA == 0)? "Non-Authoritative":"Authoritative"));
 		}
 		if (type == TYPE_NS_RR) {
-			System.out.println("NS 		" + this.answerCname + " 	[seconds can cache]		"+((this.answerAA == 0)? "Non-Authoritative":"Authoritative"));
+			System.out.println("NS 		" + this.answerCname + " 		"+this.answerTtl+"		"+((this.answerAA == 0)? "Non-Authoritative":"Authoritative"));
 		}
 		if (type == TYPE_MX_RR) {
-			System.out.println("MX 		" + this.answerCname + "	" + this.answerPreference + "	" + "[seconds can cache]	" + ((this.answerAA == 0)? "Non-Authoritative":"Authoritative"));
+			System.out.println("MX 		" + this.answerCname + "		" + this.answerPreference + " 		"+this.answerTtl+"		"+ ((this.answerAA == 0)? "Non-Authoritative":"Authoritative"));
 		}
 	}
 

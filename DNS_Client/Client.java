@@ -49,7 +49,6 @@ public class Client {
 		for (int i = 0 ; i< argsArraySize; i++ ) {
 			//setting Request options
 			 switch (args[i]) {
-			 	//TO DO: timeout,max-retries,port,mx or ns flag, server, name
 			 	case "-t":
 			 		error= request.isNumeric(args[i+1]);
 					int tvalue = Integer.parseInt(args[i+1]);
@@ -87,22 +86,23 @@ public class Client {
 		byte[] packetData = packet.data();
 		int counter = 0;
 		boolean passed = false; 
+		InetAddress ipAddress = request.ipData();
+		DatagramPacket sendPacket = new DatagramPacket(packetData, packetData.length, ipAddress, request.getPort());
+		DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+		long start =0;
+		long stop =0;
 		loop:
 		while (true) {
 			if (passed) {
 				break loop;
 			}
 			try {
-				InetAddress ipAddress = request.ipData();
 				System.out.println("DnsClient sending request for "+name); 
 				System.out.println("Server: "+ request.getIpAddr());
 				System.out.println("Request Type: " + request.getStringType());
-				DatagramPacket sendPacket = new DatagramPacket(packetData, packetData.length, ipAddress, request.getPort());
+		        start = System.currentTimeMillis( );
 				clientSocket.send(sendPacket);
-				DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-				clientSocket.receive(receivePacket);
-				packet.decodeAnswer(receivePacket.getData());
-				clientSocket.close();
+				clientSocket.receive(receivePacket);				
 				passed= true;
 			}
 			catch ( SocketTimeoutException e ){
@@ -112,6 +112,12 @@ public class Client {
 				}
 				System.out.println("Retrying...");
 				counter++;
+			}
+			if( passed ){
+			    stop = System.currentTimeMillis( );
+			    System.out.println("Response received after "+(double)(stop-start)/1000+" seconds "+ counter+" retries");				
+				packet.decodeAnswer(receivePacket.getData());
+				clientSocket.close();
 			}
 		}
 	}
