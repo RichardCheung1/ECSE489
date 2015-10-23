@@ -1,11 +1,6 @@
 To compile: 
 
-javac -d . Packet.java
-
-javac -d . Request.java
-
-javac -d . Client.java
-
+javac -d . *.java
 
 To run:
 
