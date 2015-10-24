@@ -5,7 +5,7 @@ Networking Programming and DNS
 Ryan Martis		260465757
 Richard Cheung	260494981
 Wed08
-DnsRequest.java
+Request.java
 */
 package DNS; 
 
@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 
 public class Request {
 
+	//default values and format of the IP address
 	public static final int TIMEOUT_DEFAULT = 5000; 
 	public static final int MAX_RETRIES_DEFAULT = 3;
 	public static final int PORT_DEFAULT = 53; 
@@ -33,7 +34,7 @@ public class Request {
 	private int timeout,maxRetries,port,type ;
 	private String ipAddress;
 
-
+	//Constructors
 	public Request() {
 	}
 
@@ -44,7 +45,7 @@ public class Request {
 		this.type =TYPE_A_QUERY;
 		this.ipAddress = ipAddress;
 	}
-
+	//setters and getters for options
 	public void setTimeOut (int time) { this.timeout = time*1000; }
 	public int getTimeOut () { return this.timeout; }
 
@@ -69,8 +70,8 @@ public class Request {
 	private void setIpAddr (String ipAddr) { this.ipAddress = ipAddr ; }
 	public String getIpAddr () { return this.ipAddress; }
 
-
-	public InetAddress ipData() throws Exception {
+	//method that changes the String IP address to InetAddress for the DatagramPacket
+	public InetAddress stringToInetAddress () throws Exception {
 		String ipAddr = this.ipAddress;
 		int[] ipV4 = new int[4];
 		int counter=0;
@@ -82,6 +83,7 @@ public class Request {
 		return addr1;
 	}
 
+	//method that verifies the IP address format
 	public boolean ipAddressValidator () {
 		String ipAddr = getIpAddr();
 		if (ipAddr.contains("@")){
@@ -97,13 +99,13 @@ public class Request {
 		}
 		return true;
 	}
-
+	//method that check the pattern of the IP address (must be IPv4 format)
 	public boolean ipPatternValidator (String ip) {
 		Pattern pattern = Pattern.compile(IPADDRESS_PATTERN); 
 		Matcher matcher = pattern.matcher(ip);
 		return matcher.matches(); 
 	}
-
+	//method that checks whether the string is a numerical value
 	public boolean isNumeric(String str)  
 	{  
 	  try  
@@ -117,7 +119,7 @@ public class Request {
 	  return true;  
 	}
 
-
+	//Print a Syntax Error
 	public void syntaxError() {
 		System.out.println("ERROR 	nDnsClient [-t timeout] [-r max-retries] [-p port] [-mx/-ns] @server name");
 	}

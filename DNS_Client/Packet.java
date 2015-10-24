@@ -53,7 +53,7 @@ public class Packet {
 	private int cNameSize;
 	private final int HEADER_SIZE = 12;
 
-//Initiate packet with default values
+	//Constructor
 	public Packet() {
 
 	}
@@ -61,20 +61,20 @@ public class Packet {
 		this.name = name;
 		this.type = type;
 	}
-	
+	//method that initiates the header section
 	private void packetHeader() {
 		this.id = idGenerator(); 
 		this.flags = 0x0100; //256
 		this.qdCount = 0x0001;
 		this.anCount=this.nsCount=this.arCount = 0x0000; 
 	}
-
+	//method that initiate the question section
 	private void packetQuestion(String name, int type ) {
 		this.qName = writeName(name);
 		this.qType = writeType(type);
 		this.qClass = 0x0001;
 	}
-// Create byte[] packet to DatagramPacket
+// Create byte[] in order to turn into a DatagramPacket. 
 	public byte[] data() {
 		String name = this.name; 
 		int type = this.type; 
@@ -93,8 +93,8 @@ public class Packet {
 		return truncateBytebuffer(data).array();
 
 	}
-	// decypher received packet
-	public void decodeAnswer (byte[] receivedPacket) {
+	// interpret received packet
+	public void interpretAnswer (byte[] receivedPacket) {
 		int qNameSize = this.qNameSize;
 		int byteCounter = 0;
 		String[] binaryPacket = new String[1500];
@@ -106,22 +106,28 @@ public class Packet {
 			binaryPacket[byteCounter] = String.format("%8s",Integer.toBinaryString(Byte.toUnsignedInt(byte1))).replace(' ', '0');
 			byteCounter++;
 		}
+		//gets the counts values from the received packet
 		int answerCount = Integer.valueOf(binaryPacket[6].concat(binaryPacket[7]),2);
 		int authorityCount = Integer.valueOf(binaryPacket[8].concat(binaryPacket[9]),2);
 		int addCount = Integer.valueOf(binaryPacket[10].concat(binaryPacket[11]),2);		
+		//sets the byteCounter index at the start of the answer section
 		byteCounter = HEADER_SIZE+qNameSize+4;
 		StringBuilder sb = new StringBuilder();
+		//a counter to reache the RCODE from the flags
 		int rcodeCounter = 0;
+		//iteration to find the RCODE
 		for (char c : binaryPacket[3].toCharArray() ) {
 			rcodeCounter ++;
 			if (rcodeCounter > 4) {
 				sb.append(c);
 			}
 		}
+		//if the RCODE is not equal to 0 that means an error occured
 		if (Integer.valueOf(sb.toString(),2) != 0) {
 			System.out.println("ERROR		Unexpected Response: 	Incorrect name server");
 			return;
 		}
+		//if RCODE is 0 check whether there is answers
 		else if (answerCount+authorityCount+addCount > 0){
 			if (answerCount >= 0) {
 				System.out.println("***Answer Section ("+ answerCount +" records)***");	
@@ -129,7 +135,10 @@ public class Packet {
 			if (authorityCount > 0) {
 				System.out.println("***Contains "+ authorityCount+ " Authoritative Resource Records (NO DISPLAY)***");
 			}
+			//Iteration of the answer resources records
 			for (int pi = 0; pi < answerCount+authorityCount+addCount ; pi++) {
+				// The program does not require to ouput authority section but needs the additinal sections hence
+				// the program should still iterate the authority resources records
 				if( pi == (answerCount+authorityCount)) {
 					System.out.println("***Addtional Section ("+ answerCount +" records)***");			
 				}
@@ -139,7 +148,7 @@ public class Packet {
 					for (char c : binaryPacket[2].toCharArray() ) {
 						flagCounter++;
 						if (flagCounter == 6){
-						//gets the AA flag
+							//gets the AA flag
 							this.answerAA= Integer.valueOf(new String(new char[] {c}));
 						}
 					}
@@ -162,6 +171,7 @@ public class Packet {
 					this.answerRdLength = Integer.valueOf(binaryPacket[byteCounter].concat(binaryPacket[byteCounter+1]),2);
 					byteCounter= byteCounter+2;
 					//Rdata cases
+					//if its a Type A address only the IP address bytes will be taken and store into answerRdata global variable
 					if (this.answerType == TYPE_A_RR) {
 						//4 octects
 						sb = new StringBuilder();
@@ -174,6 +184,7 @@ public class Packet {
 						this.answerRdata = sb.toString();
 						byteCounter = byteCounter+4;
 					}
+					//handling NS resource record
 					if (this.answerType == TYPE_NS_RR) {
 						int pointer =0; 
 						boolean pointerFlag= false;
@@ -195,9 +206,12 @@ public class Packet {
 								break loop;								
 							}
 						}
+						//updates the CNAME size if there's a pointer or not
 						int cSize = pointerFlag ? (this.cNameSize+1): this.cNameSize;	
+						//gets the string for the cname
 						String cname = new String(Arrays.copyOfRange(receivedPacket,byteCounter-cSize,byteCounter),StandardCharsets.US_ASCII);
 						int namesize = 0;
+						//loop until it reaches the end
 						loop:
 						for (int w = 0; w < 63 ; w++ ) {
 							namesize++;
@@ -205,15 +219,17 @@ public class Packet {
 								break loop;
 							}
 						}
+						//if there is a pointer concat the pointer string to the original
 						if (pointerFlag == true) {
 							String pointerString = new String(Arrays.copyOfRange(receivedPacket,pointer+1,pointer+namesize),StandardCharsets.US_ASCII);
 							cname = cname.concat(pointerString);
 						}
-						int characterCounter = 0;
 						sb = new StringBuilder();
+						//updates the answerCname variable
 						this.answerCname = formatAcsiiString(cname);
 						byteCounter = byteCounter+1;					
 					}
+					//handling the CNAME type resources records the same way of the NS records
 					if (this.answerType == TYPE_CNAME_RR) {
 						int pointer =0; 
 						boolean pointerFlag= false;
@@ -247,14 +263,17 @@ public class Packet {
 						}
 						String pointerString = new String(Arrays.copyOfRange(receivedPacket,pointer+1,pointer+namesize),StandardCharsets.US_ASCII);
 						cname = cname.concat(pointerString);
-						int characterCounter = 0;
 						sb = new StringBuilder(); 
 						this.answerCname = formatAcsiiString(cname);
 						byteCounter = byteCounter+1;
 					}
+					//handling the MX type resources records the same way of the NS records with
+					//a little twist because MX RR have 1 extra fields that needs to be handled 
+					// which is the preference. The mail name is handled with the same way as the alias
 					if (this.answerType == TYPE_MX_RR) {
 						int pointer =0; 
 						boolean pointerFlag= false;
+						//gets the 16 bit Preference
 						this.answerPreference = Integer.valueOf(binaryPacket[byteCounter].concat(binaryPacket[byteCounter+1]),2);
 						byteCounter = byteCounter+2;
 						loop:
@@ -287,28 +306,28 @@ public class Packet {
 						}
 						String pointerString = new String(Arrays.copyOfRange(receivedPacket,pointer+1,pointer+namesize),StandardCharsets.US_ASCII);
 						cname = cname.concat(pointerString);
-						int characterCounter = 0;
 						sb = new StringBuilder(); 
 						this.answerCname = formatAcsiiString(cname);
 						byteCounter = byteCounter+1;
 					}
 					printResults(this.answerType);
 				}
-				else {
+				/*else {
 					System.out.println("NOTFOUND");
-				}
+				}*/
 			}
 		}
+		//cannot find the answer resources record
 		else {
 			System.out.println("NOTFOUND");
 		}		
 	}
 
+	//method that formats the String into a readable string
 	public String formatAcsiiString (String s ) {
 		StringBuilder sb = new StringBuilder(); 
 		int length = s.length()-1; 
 		int counter = 0;
-		//System.out.println(s);
 		for (char c : s.toCharArray() ) {
 			if (Character.isLetterOrDigit(c)) {
 				sb.append(new String(new char [] {c} ));
@@ -323,11 +342,10 @@ public class Packet {
 		return sb.toString();
 	}
 
+	//method that prints the results according to the type of answer
 	public void printResults(int type) {
 		if (type == TYPE_A_RR){
-			//System.out.println("Response Type 	Type A RR"+"	TTL 	"+this.answerTtl);		
 			System.out.println("IP 		" + this.answerRdata + " 		"+this.answerTtl+"		"+((this.answerAA == 0)? "Non-Authoritative":"Authoritative"));
-			//System.out.println("");
 		}
 		if (type == TYPE_CNAME_RR) {
 			System.out.println("CNAME 		" + this.answerCname +" 		"+this.answerTtl+"		"+((this.answerAA == 0)? "Non-Authoritative":"Authoritative"));
@@ -340,6 +358,7 @@ public class Packet {
 		}
 	}
 
+	// Method that gets the query type from the Request object
 	private short writeType(int type) {
 		short value = 0; 
 		switch (type) {
@@ -356,6 +375,12 @@ public class Packet {
 		return value;
 	}
 
+	//method that writes the inputted name into the correct representation of the DNS packet
+	/*for example
+	_---------------------------------------------------------
+	| 3 | w |  w | w | 6 | m | c | g | i | l | l | 2 | c | a |
+	----------------------------------------------------------
+	*/
 	private byte[] writeName (String name) {
 		ByteBuffer data =  ByteBuffer.allocate(32);
 		char[] buffer= new char[63];
@@ -390,12 +415,14 @@ public class Packet {
 		return truncateBytebuffer(data).array() ;
 	}
 
+	//This method generates a random ID of 16 bits for the DNS query.
 	private short idGenerator() {
 		rng = new Random(); 
 		short id = (short) rng.nextInt(Short.MAX_VALUE+1);
 		return id; 
 	}
-	
+
+	// method that truncated extra space byte buffer 
 	private ByteBuffer truncateBytebuffer (ByteBuffer b){
 		ByteBuffer copy = b.duplicate();
 		b.flip(); 
